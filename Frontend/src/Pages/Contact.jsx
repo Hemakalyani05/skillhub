@@ -1,33 +1,64 @@
-
 import { useState } from "react";
 
-function Contact() {
+import API from "../api/courseApi";
 
+import { toast } from "react-toastify";
+
+import { motion } from "framer-motion";
+
+function Contact() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    message: ""
+    message: "",
   });
 
-  function handleSubmit(e) {
+  const [messages, setMessages] = useState([]);
+
+  const [showMessages, setShowMessages] = useState(false);
+
+  async function handleSubmit(e) {
     e.preventDefault();
 
-    alert("Message Sent Successfully");
+    if (!formData.name || !formData.email || !formData.message) {
+      toast.error("All Fields Required");
 
-    setFormData({
-      name: "",
-      email: "",
-      message: ""
-    });
+      return;
+    }
+
+    try {
+      await API.post("/contact", formData);
+
+      toast.success("Message Sent Successfully");
+
+      setFormData({
+        name: "",
+        email: "",
+        message: "",
+      });
+    } catch (error) {
+      toast.error("Failed To Send Message");
+    }
+  }
+
+  async function fetchMessages() {
+    try {
+      const response = await API.get("/contact");
+
+      setMessages(response.data);
+
+      setShowMessages(true);
+    } catch (error) {
+      toast.error(error);
+      // toast.error(""Unable To Load Messages"");
+    }
   }
 
   return (
     <div className="page-container">
-
       <h1>Contact Us</h1>
 
       <form onSubmit={handleSubmit}>
-
         <input
           type="text"
           placeholder="Enter Name"
@@ -35,12 +66,13 @@ function Contact() {
           onChange={(e) =>
             setFormData({
               ...formData,
-              name: e.target.value
+              name: e.target.value,
             })
           }
         />
 
-        <br /><br />
+        <br />
+        <br />
 
         <input
           type="email"
@@ -49,33 +81,68 @@ function Contact() {
           onChange={(e) =>
             setFormData({
               ...formData,
-              email: e.target.value
+              email: e.target.value,
             })
           }
         />
 
-        <br /><br />
+        <br />
+        <br />
 
         <textarea
-          placeholder="Enter Message"
           rows="5"
+          placeholder="Enter Message"
           value={formData.message}
           onChange={(e) =>
             setFormData({
               ...formData,
-              message: e.target.value
+              message: e.target.value,
             })
           }
         />
 
-        <br /><br />
+        <br />
+        <br />
 
-        <button type="submit">
-          Send Message
-        </button>
-
+        <button type="submit">Send Message</button>
       </form>
 
+      <br />
+
+      <button className="received-btn" onClick={fetchMessages}>
+        Received Messages
+      </button>
+
+      {/* <button
+        onClick={fetchMessages}
+      >
+        Received Messages
+      </button> */}
+
+      <br />
+      <br />
+
+      {showMessages && (
+        <div>
+          {/* <h2>
+              Received Messages
+            </h2> */}
+
+          {messages.map((msg) => (
+            
+            <div key={msg._id} className="message-card">
+
+              <h4>{msg.name}</h4>
+
+              <p>{msg.email}</p>
+
+              <p>{msg.message}</p>
+
+              <hr />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
